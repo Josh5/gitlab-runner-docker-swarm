@@ -1,0 +1,12 @@
+# Ignore IDE config
+/.idea/**
+
+# Temp files
+/tmp/**
+/config/**
+
+# Development files
+.env
+/*.env
+.secret
+/*.secret

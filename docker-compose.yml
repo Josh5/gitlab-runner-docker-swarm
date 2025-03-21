@@ -1,0 +1,58 @@
+# ---------------
+# Development GitLab Runner Config
+#
+# ---------------
+---
+version: "3.8"
+
+services:
+  # -- DIND SERVICE --
+  dind-manager:
+    image: ghcr.io/josh5/gitlab-runner-dind-manager:latest
+    build:
+      context: docker/gitlab-runner-dind-manager
+
+    # ENVIRONMENT:
+    environment:
+      CONFIG_PATH: ${PROJECT_ROOT:?}/config
+      KEEP_ALIVE: ${KEEP_ALIVE:-false}
+
+    # VOLUMES:
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: bind
+        source: ${PROJECT_ROOT:?}/config
+        target: ${PROJECT_ROOT:?}/config
+
+  # -- GITLAB RUNNER --
+  agent-manager:
+    image: ghcr.io/josh5/gitlab-runner-manager:latest
+    build:
+      context: docker/gitlab-runner-manager
+
+    # ENVIRONMENT:
+    environment:
+      CONFIG_PATH: ${PROJECT_ROOT:?}/config
+      # Releases:
+      #   https://gitlab.com/gitlab-org/gitlab-runner/-/releases
+      #   https://hub.docker.com/r/gitlab/gitlab-runner/tags
+      GITLAB_RUNNER_VERSION: "v17.3.1"
+      KEEP_ALIVE: ${KEEP_ALIVE:-false}
+      RUNNER_NAME: ${HOSTNAME:?}
+      CONCURRENT: ${RUNNER_CONCURRENCY:-1}
+      DOCKER_IMAGE: ${DOCKER_IMAGE:-docker}
+
+    # VOLUMES:
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: bind
+        source: ${PROJECT_ROOT:?}/config
+        target: ${PROJECT_ROOT:?}/config
+      - type: bind
+        source: ${PROJECT_ROOT:?}/gitlab-registration-token.secret
+        target: /run/secrets/GITLAB_REGISTRATION_TOKEN_SECRET
+        read_only: true
