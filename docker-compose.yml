@@ -14,7 +14,7 @@ services:
 
     # ENVIRONMENT:
     environment:
-      CONFIG_PATH: ${PROJECT_ROOT:?}/config
+      DATA_PATH: ${PROJECT_ROOT:?}/config
       KEEP_ALIVE: ${KEEP_ALIVE:-false}
 
     # VOLUMES:
@@ -34,7 +34,7 @@ services:
 
     # ENVIRONMENT:
     environment:
-      CONFIG_PATH: ${PROJECT_ROOT:?}/config
+      DATA_PATH: ${PROJECT_ROOT:?}/config
       # Releases:
       #   https://gitlab.com/gitlab-org/gitlab-runner/-/releases
       #   https://hub.docker.com/r/gitlab/gitlab-runner/tags

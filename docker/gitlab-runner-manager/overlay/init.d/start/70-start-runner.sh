@@ -5,15 +5,15 @@
 # File Created: Friday, 21st March 2025 4:36:06 pm
 # Author: Josh.5 (jsunnex@gmail.com)
 # -----
-# Last Modified: Friday, 21st March 2025 6:37:30 pm
+# Last Modified: Friday, 21st March 2025 7:04:24 pm
 # Modified By: Josh.5 (jsunnex@gmail.com)
 ###
 
 echo "--- Setting up run aliases ---"
 D_COMMON_RUN_ARGS="--rm --privileged \
       --env DOCKER_HOST=tcp://${gitlab_runner_dind_name}:2375 \
-      --volume=${CONFIG_PATH:?}/${RUNNER_NAME:?}/config:/etc/gitlab-runner \
-      --volume=${CONFIG_PATH:?}/${RUNNER_NAME:?}/bin:/usr/local/bin \
+      --volume=${DATA_PATH:?}/${RUNNER_NAME:?}/config:/etc/gitlab-runner \
+      --volume=${DATA_PATH:?}/${RUNNER_NAME:?}/bin:/usr/local/bin \
       --volume=/var/run/docker.sock:/var/run/docker.sock \
       --network=${gitlab_runner_net_name} \
       gitlab/gitlab-runner:${GITLAB_RUNNER_VERSION:?}"
@@ -38,23 +38,23 @@ GL_RUN_CMD="docker run -d --rm --name ${gitlab_runner_name:?} \
         ${D_COMMON_RUN_ARGS} \
         run --user=gitlab-runner --working-directory=/home/gitlab-runner"
 GL_CLEAN_CMD="docker run --rm --entrypoint="" --name ${gitlab_runner_name:?}-cleaner \
-        --volume=${CONFIG_PATH:?}/docker-cache:/var/lib/docker \
+        --volume=${DATA_PATH:?}/docker-cache:/var/lib/docker \
         ${D_COMMON_RUN_ARGS} \
         /usr/local/bin/gitlab-runner-cleanup.sh"
 echo
 
 echo "--- Writing config to env file ---"
-mkdir -p "${CONFIG_PATH:?}/${RUNNER_NAME:?}/config"
-echo "" >"${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
-echo "GITLAB_RUNNER_VERSION=${GITLAB_RUNNER_VERSION:?}" >>"${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
-echo "docker_version=${docker_version:?}" >>"${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
-echo "CONCURRENT=${CONCURRENT:?}" >>"${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
-echo "D_COMMON_RUN_ARGS=${D_COMMON_RUN_ARGS:?}" >>"${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
-echo "GL_REGISTER_CMD=${GL_REGISTER_CMD:?}" >>"${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
-echo "GL_LIST_CMD=${GL_LIST_CMD:?}" >>"${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
-echo "GL_RUN_CMD=${GL_RUN_CMD:?}" >>"${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
-echo "GL_CLEAN_CMD=${GL_CLEAN_CMD:?}" >>"${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
-cat "${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
+mkdir -p "${DATA_PATH:?}/${RUNNER_NAME:?}/config"
+echo "" >"${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
+echo "GITLAB_RUNNER_VERSION=${GITLAB_RUNNER_VERSION:?}" >>"${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
+echo "docker_version=${docker_version:?}" >>"${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
+echo "CONCURRENT=${CONCURRENT:?}" >>"${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
+echo "D_COMMON_RUN_ARGS=${D_COMMON_RUN_ARGS:?}" >>"${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
+echo "GL_REGISTER_CMD=${GL_REGISTER_CMD:?}" >>"${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
+echo "GL_LIST_CMD=${GL_LIST_CMD:?}" >>"${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
+echo "GL_RUN_CMD=${GL_RUN_CMD:?}" >>"${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
+echo "GL_CLEAN_CMD=${GL_CLEAN_CMD:?}" >>"${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
+cat "${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env"
 echo
 
 echo "--- Writing helper scripts to /usr/local/bin ---"
@@ -66,7 +66,7 @@ chmod +x /usr/local/bin/gitlab-runner-cleanup.sh
 echo
 
 echo "--- Checking if config has changed since last run ---"
-if ! cmp -s "${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env" "${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/current-runner-config.env"; then
+if ! cmp -s "${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env" "${DATA_PATH:?}/${RUNNER_NAME:?}/config/current-runner-config.env"; then
     echo "  - Env has changed. Stopping up old containers due to possible config update"
     while sleep 1; do
         if ! docker ps --filter "name=${gitlab_runner_name:?}" | grep -q "${gitlab_runner_name:?}"; then
@@ -77,7 +77,7 @@ if ! cmp -s "${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env" "${
         docker stop "${gitlab_runner_name:?}" &>/dev/null || true
         docker rm "${gitlab_runner_name:?}" &>/dev/null || true
     done
-    mv -fv "${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env" "${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/current-runner-config.env"
+    mv -fv "${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env" "${DATA_PATH:?}/${RUNNER_NAME:?}/config/current-runner-config.env"
 else
     echo "  - Env has not changed."
 fi
@@ -85,16 +85,16 @@ echo
 
 if ! docker ps --filter "name=${gitlab_runner_name:?}" | grep -q "${gitlab_runner_name:?}"; then
     echo "--- Creating base config ---"
-    mkdir -p "${CONFIG_PATH:?}/${RUNNER_NAME:?}/config"
-    cat <<EOF >"${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/config.toml"
+    mkdir -p "${DATA_PATH:?}/${RUNNER_NAME:?}/config"
+    cat <<EOF >"${DATA_PATH:?}/${RUNNER_NAME:?}/config/config.toml"
 concurrent = ${CONCURRENT}
 check_interval = 0
 shutdown_timeout = 0
 [session_server]
     session_timeout = 1800
 EOF
-    cat "${CONFIG_PATH:?}/${RUNNER_NAME:?}/config/config.toml"
-    chmod a+rw "${CONFIG_PATH:?}/${RUNNER_NAME:?}/config"
+    cat "${DATA_PATH:?}/${RUNNER_NAME:?}/config/config.toml"
+    chmod a+rw "${DATA_PATH:?}/${RUNNER_NAME:?}/config"
     echo
 
     echo "--- Fetching latest 'gitlab/gitlab-runner:${GITLAB_RUNNER_VERSION:?}' image ---"

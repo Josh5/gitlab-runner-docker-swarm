@@ -5,7 +5,7 @@
 # File Created: Friday, 18th October 2024 5:05:51 pm
 # Author: Josh5 (jsunnex@gmail.com)
 # -----
-# Last Modified: Friday, 21st March 2025 6:43:16 pm
+# Last Modified: Friday, 21st March 2025 7:04:13 pm
 # Modified By: Josh.5 (jsunnex@gmail.com)
 ###
 set -eu
@@ -20,8 +20,8 @@ fi
 # TODO: Make this configurable
 export dind_net_name="gitlab-runner-net"
 export dind_name="gitlab-runner-dind"
-export dind_cache_path="${CONFIG_PATH:?}/docker-cache"
-export dind_run_path="${CONFIG_PATH:?}/docker-sock"
+export dind_cache_path="${DATA_PATH:?}/docker-cache"
+export dind_run_path="${DATA_PATH:?}/docker-sock"
 
 ################################################
 # --- Create TERM monitor
