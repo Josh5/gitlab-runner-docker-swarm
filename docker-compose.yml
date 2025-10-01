@@ -3,8 +3,6 @@
 #
 # ---------------
 ---
-version: "3.8"
-
 services:
   # -- DIND SERVICE --
   dind-manager:
@@ -38,7 +36,7 @@ services:
       # Releases:
       #   https://gitlab.com/gitlab-org/gitlab-runner/-/releases
       #   https://hub.docker.com/r/gitlab/gitlab-runner/tags
-      GITLAB_RUNNER_VERSION: "v17.3.1"
+      GITLAB_RUNNER_VERSION: 'v17.3.1'
       KEEP_ALIVE: ${KEEP_ALIVE:-false}
       RUNNER_NAME: ${HOSTNAME:?}
       CONCURRENT: ${RUNNER_CONCURRENCY:-1}

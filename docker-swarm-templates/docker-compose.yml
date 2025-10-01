@@ -46,8 +46,6 @@
 #
 # ---------------
 ---
-version: "3.8"
-
 secrets:
   GITLAB_REGISTRATION_TOKEN_SECRET:
     external: true
@@ -96,7 +94,7 @@ services:
       # Releases:
       #   https://gitlab.com/gitlab-org/gitlab-runner/-/releases
       #   https://hub.docker.com/r/gitlab/gitlab-runner/tags
-      GITLAB_RUNNER_VERSION: "v17.3.1"
+      GITLAB_RUNNER_VERSION: 'v17.3.1'
       KEEP_ALIVE: ${KEEP_ALIVE:-true}
       RUNNER_NAME: ${RUNNER_NAME:?}
       CONCURRENT: ${RUNNER_CONCURRENCY:-1}
@@ -115,6 +113,6 @@ services:
     secrets:
       - source: GITLAB_REGISTRATION_TOKEN_SECRET
         target: GITLAB_REGISTRATION_TOKEN_SECRET
-        uid: "103"
-        gid: "103"
+        uid: '103'
+        gid: '103'
         mode: 0440
