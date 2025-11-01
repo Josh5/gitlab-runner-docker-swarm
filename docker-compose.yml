@@ -1,0 +1,118 @@
+# ---------------
+# GitLab Runner for Docker Swarm
+# ---------------
+# Why?
+#   The reason for creating this is to achieve the following goals:
+#   - Maintain the ability to deploy with Swarm.
+#   - Create a GitLab Runner that can be 100% compatible with GitLab's provided shared runners.
+#     - Enable DIND execution (Swarm does not support privileged containers).
+#     - Enable "Services" in the job config with DIND.
+#     - Enable automated clean-up of docker images.
+#   - Add the ability to create a shared "cache" for docker image stored on the host to persist between updates.
+#
+#   The basic way of deploying a runner simply did not provide an easy transition path from the shared GitLab
+#   runners to our own group runners. Switching jobs (especially docker build jobs) over to the group runners
+#   would have meant refactoring multiple projects.
+#   Deploying runners this way means we can now simply toggle shared runners on/off and group runners to accept
+#   untagged jobs, and everything will continue to work.
+#
+# ---------------
+# Config (paste into portainer advance env text input):
+#
+# <config_start>
+#   #@ Placement
+#   #-    Configure a placement constraint to where the container will be run.
+#   #-    Examples:
+#   #-        - node.hostname==<hostname>
+#   #-        - engine.labels.fs-access.<worker-hostname>.mnt==true
+#   #-        - node.role!=manager
+#   PLACEMENT_CONSTRAINT=engine.labels.node-type==gitlab-runner
+#   #-  - DATA_PATH -
+#   #-    The path to the directory where cache storage will be written
+#   DATA_PATH=/opt/gitlab-runner
+#   #-  - RUNNER_NAME -
+#   #-    Configure the GitLab Runner name
+#   RUNNER_NAME=swarm-gitlab-runner
+#   #-  - RUNNER_CONCURRENCY -
+#   #-    GitLab Runner concurrency (max number of jobs it can process at the same time)
+#   RUNNER_CONCURRENCY=2
+#   #-  - DOCKER_IMAGE -
+#   #-    Default docker image used by runner jobs
+#   DOCKER_IMAGE=docker
+#   #-  - KEEP_ALIVE -
+#   #-    Keep services alive between restarts (will still recreate if the configuration updates)
+#   KEEP_ALIVE=true
+# <config_end>
+#
+# ---------------
+---
+secrets:
+  GITLAB_REGISTRATION_TOKEN_SECRET:
+    external: true
+
+x-service-defaults: &service_defaults
+  deploy:
+    mode: global
+    restart_policy:
+      condition: any
+      delay: 10s
+    update_config:
+      delay: 10s
+      order: start-first
+    placement:
+      constraints:
+        - ${PLACEMENT_CONSTRAINT:?}
+
+services:
+  # -- DIND SERVICE --
+  dind-manager:
+    <<: *service_defaults
+    image: ghcr.io/josh5/gitlab-runner-dind-manager@sha256:8b92a4252df5aa0e52dd1481e909bca544df6e9ce5d97a920dd9c09c1c3b8c8f
+
+    # ENVIRONMENT:
+    environment:
+      DATA_PATH: ${DATA_PATH:?}
+      KEEP_ALIVE: ${KEEP_ALIVE:-true}
+
+    # VOLUMES:
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: bind
+        source: ${DATA_PATH:?}
+        target: ${DATA_PATH:?}
+
+  # -- GITLAB RUNNER --
+  agent-manager:
+    <<: *service_defaults
+    image: ghcr.io/josh5/gitlab-runner-manager@sha256:5800de3314fb069c87b22c839e2e66560606551e5d0a81fcc74917bbdae109fe
+
+    # ENVIRONMENT:
+    environment:
+      DATA_PATH: ${DATA_PATH:?}
+      # Releases:
+      #   https://gitlab.com/gitlab-org/gitlab-runner/-/releases
+      #   https://hub.docker.com/r/gitlab/gitlab-runner/tags
+      GITLAB_RUNNER_VERSION: 'v17.3.1'
+      KEEP_ALIVE: ${KEEP_ALIVE:-true}
+      RUNNER_NAME: ${RUNNER_NAME:?}
+      CONCURRENT: ${RUNNER_CONCURRENCY:-1}
+      DOCKER_IMAGE: ${DOCKER_IMAGE:-docker}
+
+    # VOLUMES:
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: bind
+        source: ${DATA_PATH:?}
+        target: ${DATA_PATH:?}
+
+    # SECRETS:
+    secrets:
+      - source: GITLAB_REGISTRATION_TOKEN_SECRET
+        target: GITLAB_REGISTRATION_TOKEN_SECRET
+        uid: '103'
+        gid: '103'
+        mode: 0440
