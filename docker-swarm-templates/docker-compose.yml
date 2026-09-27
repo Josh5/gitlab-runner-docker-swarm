@@ -30,6 +30,12 @@
 #   #-  - DATA_PATH -
 #   #-    The path to the directory where cache storage will be written
 #   DATA_PATH=/opt/gitlab-runner
+#   #-  - GITLAB_RUNNER_VERSION -
+#   #-    Specify a specific version of GitLab Runner to use
+#   #-    Releases:
+#   #-      https://gitlab.com/gitlab-org/gitlab-runner/-/releases
+#   #-      https://hub.docker.com/r/gitlab/gitlab-runner/tags
+#   GITLAB_RUNNER_VERSION=v19.4.1
 #   #-  - RUNNER_NAME -
 #   #-    Configure the GitLab Runner name
 #   RUNNER_NAME=swarm-gitlab-runner
@@ -63,6 +69,16 @@ x-service-defaults: &service_defaults
       constraints:
         - ${PLACEMENT_CONSTRAINT:?}
 
+x-environment-defaults:
+  environment: &agent_environment_defaults
+    # Releases:
+    #   https://gitlab.com/gitlab-org/gitlab-runner/-/releases
+    #   https://hub.docker.com/r/gitlab/gitlab-runner/tags
+    GITLAB_RUNNER_VERSION: ${GITLAB_RUNNER_VERSION:-v19.4.1}
+    DATA_PATH: ${DATA_PATH:?}
+    KEEP_ALIVE: ${KEEP_ALIVE:-true}
+    DOCKER_IMAGE: ${DOCKER_IMAGE:-docker}
+
 services:
   # -- DIND SERVICE --
   dind-manager:
@@ -90,15 +106,9 @@ services:
 
     # ENVIRONMENT:
     environment:
-      DATA_PATH: ${DATA_PATH:?}
-      # Releases:
-      #   https://gitlab.com/gitlab-org/gitlab-runner/-/releases
-      #   https://hub.docker.com/r/gitlab/gitlab-runner/tags
-      GITLAB_RUNNER_VERSION: 'v17.3.1'
-      KEEP_ALIVE: ${KEEP_ALIVE:-true}
+      <<: *agent_environment_defaults
       RUNNER_NAME: ${RUNNER_NAME:?}
       CONCURRENT: ${RUNNER_CONCURRENCY:-1}
-      DOCKER_IMAGE: ${DOCKER_IMAGE:-docker}
 
     # VOLUMES:
     volumes:
