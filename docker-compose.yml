@@ -41,6 +41,8 @@ services:
       RUNNER_NAME: ${HOSTNAME:?}
       CONCURRENT: ${RUNNER_CONCURRENCY:-1}
       DOCKER_IMAGE: ${DOCKER_IMAGE:-docker}
+      DOCKER_PULL_POLICY: ${DOCKER_PULL_POLICY:-if-not-present}
+      DOCKER_ALLOWED_PULL_POLICIES: ${DOCKER_ALLOWED_PULL_POLICIES:-always,if-not-present}
 
     # VOLUMES:
     volumes:

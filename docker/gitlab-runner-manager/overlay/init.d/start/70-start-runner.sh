@@ -5,9 +5,42 @@
 # File Created: Friday, 21st March 2025 4:36:06 pm
 # Author: Josh.5 (jsunnex@gmail.com)
 # -----
-# Last Modified: Friday, 21st March 2025 7:04:24 pm
+# Last Modified: Monday, 28th September 2026 3:36:22 pm
 # Modified By: Josh.5 (jsunnex@gmail.com)
 ###
+
+echo "--- Validating Docker pull policies ---"
+DOCKER_PULL_POLICY="${DOCKER_PULL_POLICY:-if-not-present}"
+DOCKER_ALLOWED_PULL_POLICIES="${DOCKER_ALLOWED_PULL_POLICIES:-always,if-not-present}"
+case "${DOCKER_PULL_POLICY}" in
+always | if-not-present | never) ;;
+*)
+    echo "Invalid DOCKER_PULL_POLICY: ${DOCKER_PULL_POLICY}" >&2
+    exit 1
+    ;;
+esac
+
+# Pass each policy separately; a comma-separated CLI value may become one TOML entry.
+IFS=',' read -r -a docker_allowed_pull_policies <<<"${DOCKER_ALLOWED_PULL_POLICIES}"
+DOCKER_ALLOWED_PULL_POLICY_ARGS=""
+docker_default_pull_policy_allowed=false
+for policy in "${docker_allowed_pull_policies[@]}"; do
+    case "${policy}" in
+    always | if-not-present | never) ;;
+    *)
+        echo "Invalid DOCKER_ALLOWED_PULL_POLICIES entry: ${policy}" >&2
+        exit 1
+        ;;
+    esac
+    DOCKER_ALLOWED_PULL_POLICY_ARGS+=" --docker-allowed-pull-policies ${policy}"
+    if [ "${policy}" = "${DOCKER_PULL_POLICY}" ]; then
+        docker_default_pull_policy_allowed=true
+    fi
+done
+if [ "${docker_default_pull_policy_allowed}" != true ]; then
+    echo "DOCKER_ALLOWED_PULL_POLICIES must include DOCKER_PULL_POLICY" >&2
+    exit 1
+fi
 
 echo "--- Setting up run aliases ---"
 D_COMMON_RUN_ARGS="--rm --privileged \
@@ -27,7 +60,8 @@ GL_REGISTER_CMD="docker run --rm --name ${gitlab_runner_name:?}-register \
         --docker-privileged \
         --docker-dns ${DOCKER_DNS:-8.8.8.8} \
         --docker-services-limit -1 \
-        --docker-pull-policy if-not-present \
+        --docker-pull-policy ${DOCKER_PULL_POLICY} \
+        ${DOCKER_ALLOWED_PULL_POLICY_ARGS} \
         --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
         --token ${gitlab_registration_token_secret} \
         --description ${RUNNER_NAME:?}"
