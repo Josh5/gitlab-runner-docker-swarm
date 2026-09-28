@@ -13,6 +13,8 @@ services:
     # ENVIRONMENT:
     environment:
       DATA_PATH: ${PROJECT_ROOT:?}/config
+      DIND_CONTAINER_NAME: ${DIND_CONTAINER_NAME:-gitlab-runner-dind}
+      DIND_NETWORK_NAME: ${DIND_NETWORK_NAME:-gitlab-runner-net}
       KEEP_ALIVE: ${KEEP_ALIVE:-false}
 
     # VOLUMES:
@@ -33,6 +35,8 @@ services:
     # ENVIRONMENT:
     environment:
       DATA_PATH: ${PROJECT_ROOT:?}/config
+      DIND_CONTAINER_NAME: ${DIND_CONTAINER_NAME:-gitlab-runner-dind}
+      DIND_NETWORK_NAME: ${DIND_NETWORK_NAME:-gitlab-runner-net}
       # Releases:
       #   https://gitlab.com/gitlab-org/gitlab-runner/-/releases
       #   https://hub.docker.com/r/gitlab/gitlab-runner/tags

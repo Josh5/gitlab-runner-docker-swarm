@@ -5,7 +5,7 @@
 # File Created: Friday, 21st March 2025 5:03:57 pm
 # Author: Josh.5 (jsunnex@gmail.com)
 # -----
-# Last Modified: Thursday, 2nd October 2025 12:18:44 pm
+# Last Modified: Monday, 28th September 2026 6:33:23 pm
 # Modified By: Josh.5 (jsunnex@gmail.com)
 ###
 
@@ -20,7 +20,7 @@ echo "  - Calculating CPU quota..."
 DIND_CPU_PERCENT=95
 TOTAL_CPUS=$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 CPU_PERIOD=100000
-CPU_QUOTA=$(( CPU_PERIOD * TOTAL_CPUS * DIND_CPU_PERCENT / 100 ))
+CPU_QUOTA=$((CPU_PERIOD * TOTAL_CPUS * DIND_CPU_PERCENT / 100))
 DIND_CPU_SHARES=512
 echo "    - CPU Percent: ${DIND_CPU_PERCENT}%"
 echo "    - Total CPUs: ${TOTAL_CPUS}"
@@ -34,7 +34,7 @@ if [ -z "${mem_total_bytes}" ] || ! [ "${mem_total_bytes}" -gt 0 ] 2>/dev/null; 
     if [ -r /proc/meminfo ]; then
         mem_kb=$(awk '/MemTotal:/ {print $2}' /proc/meminfo)
         if [ -n "${mem_kb}" ] && [ "${mem_kb}" -gt 0 ] 2>/dev/null; then
-            mem_total_bytes=$(( mem_kb * 1024 ))
+            mem_total_bytes=$((mem_kb * 1024))
         fi
     fi
 fi
@@ -43,11 +43,11 @@ if [ -z "${mem_total_bytes}" ] || ! [ "${mem_total_bytes}" -gt "${BUFFER_BYTES}"
     # Fallback if detection failed or total <= buffer: default to 1GiB
     DIND_MEMLIMIT=$((1024 * 1024 * 1024))
 else
-    DIND_MEMLIMIT=$(( mem_total_bytes - BUFFER_BYTES ))
+    DIND_MEMLIMIT=$((mem_total_bytes - BUFFER_BYTES))
 fi
 echo "    - Host Mem Total (bytes): ${mem_total_bytes:-unknown}"
 echo "    - DIND Mem Limit (bytes): ${DIND_MEMLIMIT}"
-echo "    - DIND Mem Limit (MiB): $(( DIND_MEMLIMIT / 1024 / 1024 ))"
+echo "    - DIND Mem Limit (MiB): $((DIND_MEMLIMIT / 1024 / 1024))"
 
 DIND_RUN_CMD="docker run --privileged -d --rm --name ${dind_name:?} \
           --memory ${DIND_MEMLIMIT:?} \
@@ -88,7 +88,7 @@ else
 fi
 echo
 
-if ! docker ps --filter "name=${dind_name:?}" | grep -q "${dind_name:?}"; then
+if ! docker ps --format '{{.Names}}' | grep -Fxq "${dind_name:?}"; then
     echo "--- Fetching latest docker in docker image 'docker:${docker_version:?}-dind' ---"
     docker pull docker:${docker_version:?}-dind
     echo

@@ -42,6 +42,8 @@ The default name is retained for compatibility: despite containing `REGISTRATION
 ```env
 PLACEMENT_CONSTRAINT=engine.labels.node-type==gitlab-runner
 DATA_PATH=/opt/gitlab-runner
+DIND_CONTAINER_NAME=gitlab-runner-dind
+DIND_NETWORK_NAME=gitlab-runner-net
 GITLAB_RUNNER_VERSION=v19.4.1
 GITLAB_REGISTRATION_TOKEN_SECRET=GITLAB_REGISTRATION_TOKEN_SECRET
 RUNNER_NAME=swarm-gitlab-runner
@@ -60,6 +62,8 @@ The Compose path above is relative to the published release branch's root. This 
 | ---------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PLACEMENT_CONSTRAINT`             | Required                           | Selects nodes for both managers. The example uses the engine label `node-type=gitlab-runner`; `node.hostname==runner-1` is another option.                                                                                |
 | `DATA_PATH`                        | Required                           | Absolute host path for persistent Docker cache, runner configuration, and helper binaries. Create it on every selected node before deploying.                                                                             |
+| `DIND_CONTAINER_NAME`              | `gitlab-runner-dind`               | Host Docker container name for DinD. Both managers use this value; choose a unique name per stack on the same host.                                                                                                       |
+| `DIND_NETWORK_NAME`                | `gitlab-runner-net`                | Host Docker bridge network shared by the runner and its DinD container. Choose a unique name per stack on the same host.                                                                                                  |
 | `GITLAB_RUNNER_VERSION`            | `v19.4.1`                          | Version tag of the upstream `gitlab/gitlab-runner` image launched by the manager. This does not select the manager image version.                                                                                         |
 | `GITLAB_REGISTRATION_TOKEN_SECRET` | `GITLAB_REGISTRATION_TOKEN_SECRET` | Name of the existing external Docker secret containing the runner authentication token. Set a different name per stack to use different tokens.                                                                           |
 | `RUNNER_NAME`                      | Required                           | Runner description and directory name under `DATA_PATH`. Keep it stable to reuse the same configuration directory.                                                                                                        |
@@ -70,6 +74,8 @@ The Compose path above is relative to the published release branch's root. This 
 | `KEEP_ALIVE`                       | `true`                             | Skips forced cleanup of existing runner/DinD containers at manager startup. Configuration changes can still cause recreation, and normal manager shutdown stops its managed container. `false` forces cleanup at startup. |
 
 The GitLab runner's scope, job tags, protected-job access, and acceptance of untagged jobs are configured in GitLab when creating or editing the runner.
+
+When deploying multiple stacks on the same host, give each a distinct `DIND_CONTAINER_NAME`, `DIND_NETWORK_NAME`, `DATA_PATH`, and `RUNNER_NAME`. Omitting either DinD name setting or leaving it empty uses the default above. These settings require updated images for both managers; changing stack environment variables on older images is insufficient.
 
 ## Image pull policies
 

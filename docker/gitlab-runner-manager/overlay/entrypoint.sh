@@ -5,7 +5,7 @@
 # File Created: Friday, 18th October 2024 5:05:51 pm
 # Author: Josh5 (jsunnex@gmail.com)
 # -----
-# Last Modified: Friday, 21st March 2025 6:43:27 pm
+# Last Modified: Monday, 28th September 2026 6:33:28 pm
 # Modified By: Josh.5 (jsunnex@gmail.com)
 ###
 set -eu
@@ -17,8 +17,8 @@ export docker_version=$(docker --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
 if [ "X${DOCKER_VERSION:-}" = "X" ]; then
     export docker_version=${DOCKER_VERSION:?}
 fi
-export gitlab_runner_net_name="gitlab-runner-net"
-export gitlab_runner_dind_name="gitlab-runner-dind"
+export gitlab_runner_net_name="${DIND_NETWORK_NAME:-gitlab-runner-net}"
+export gitlab_runner_dind_name="${DIND_CONTAINER_NAME:-gitlab-runner-dind}"
 export gitlab_runner_name="gitlab-runner-${RUNNER_NAME}"
 export gitlab_registration_token_secret="$(cat /run/secrets/GITLAB_REGISTRATION_TOKEN_SECRET)"
 
@@ -72,7 +72,7 @@ _stack_monitor() {
     while true; do
         # Check if any service has exited
         echo "  - Check if runner has exited ---"
-        if ! docker ps --filter "name=${gitlab_runner_name}" | grep -q "${gitlab_runner_name}"; then
+        if ! docker ps --format '{{.Names}}' | grep -Fxq "${gitlab_runner_name}"; then
             echo "      - GitLab Runner container has stopped. Exiting with status code 123 ---"
             exit 123
         fi

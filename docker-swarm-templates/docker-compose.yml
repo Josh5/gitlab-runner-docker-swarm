@@ -30,6 +30,12 @@
 #   #-  - DATA_PATH -
 #   #-    The path to the directory where cache storage will be written
 #   DATA_PATH=/opt/gitlab-runner
+#   #-  - DIND_CONTAINER_NAME -
+#   #-    Host Docker container name for DinD; use a unique name per stack on the same host
+#   DIND_CONTAINER_NAME=gitlab-runner-dind
+#   #-  - DIND_NETWORK_NAME -
+#   #-    Host Docker network for DinD and the runner; use a unique name per stack on the same host
+#   DIND_NETWORK_NAME=gitlab-runner-net
 #   #-  - GITLAB_RUNNER_VERSION -
 #   #-    Specify a specific version of GitLab Runner to use
 #   #-    Releases:
@@ -87,6 +93,8 @@ x-environment-defaults:
     #   https://hub.docker.com/r/gitlab/gitlab-runner/tags
     GITLAB_RUNNER_VERSION: ${GITLAB_RUNNER_VERSION:-v19.4.1}
     DATA_PATH: ${DATA_PATH:?}
+    DIND_CONTAINER_NAME: ${DIND_CONTAINER_NAME:-gitlab-runner-dind}
+    DIND_NETWORK_NAME: ${DIND_NETWORK_NAME:-gitlab-runner-net}
     KEEP_ALIVE: ${KEEP_ALIVE:-true}
     DOCKER_IMAGE: ${DOCKER_IMAGE:-docker}
     DOCKER_PULL_POLICY: ${DOCKER_PULL_POLICY:-if-not-present}
@@ -101,6 +109,8 @@ services:
     # ENVIRONMENT:
     environment:
       DATA_PATH: ${DATA_PATH:?}
+      DIND_CONTAINER_NAME: ${DIND_CONTAINER_NAME:-gitlab-runner-dind}
+      DIND_NETWORK_NAME: ${DIND_NETWORK_NAME:-gitlab-runner-net}
       KEEP_ALIVE: ${KEEP_ALIVE:-true}
 
     # VOLUMES:

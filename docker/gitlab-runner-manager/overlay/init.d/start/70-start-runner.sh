@@ -5,7 +5,7 @@
 # File Created: Friday, 21st March 2025 4:36:06 pm
 # Author: Josh.5 (jsunnex@gmail.com)
 # -----
-# Last Modified: Monday, 28th September 2026 3:36:22 pm
+# Last Modified: Monday, 28th September 2026 6:33:33 pm
 # Modified By: Josh.5 (jsunnex@gmail.com)
 ###
 
@@ -103,7 +103,7 @@ echo "--- Checking if config has changed since last run ---"
 if ! cmp -s "${DATA_PATH:?}/${RUNNER_NAME:?}/config/new-runner-config.env" "${DATA_PATH:?}/${RUNNER_NAME:?}/config/current-runner-config.env"; then
     echo "  - Env has changed. Stopping up old containers due to possible config update"
     while sleep 1; do
-        if ! docker ps --filter "name=${gitlab_runner_name:?}" | grep -q "${gitlab_runner_name:?}"; then
+        if ! docker ps --format '{{.Names}}' | grep -Fxq "${gitlab_runner_name:?}"; then
             echo "    - Container ${gitlab_runner_name:?} is not running"
             break
         fi
@@ -117,7 +117,7 @@ else
 fi
 echo
 
-if ! docker ps --filter "name=${gitlab_runner_name:?}" | grep -q "${gitlab_runner_name:?}"; then
+if ! docker ps --format '{{.Names}}' | grep -Fxq "${gitlab_runner_name:?}"; then
     echo "--- Creating base config ---"
     mkdir -p "${DATA_PATH:?}/${RUNNER_NAME:?}/config"
     cat <<EOF >"${DATA_PATH:?}/${RUNNER_NAME:?}/config/config.toml"

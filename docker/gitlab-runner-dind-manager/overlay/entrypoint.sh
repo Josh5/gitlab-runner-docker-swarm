@@ -5,7 +5,7 @@
 # File Created: Friday, 18th October 2024 5:05:51 pm
 # Author: Josh5 (jsunnex@gmail.com)
 # -----
-# Last Modified: Friday, 21st March 2025 7:04:13 pm
+# Last Modified: Monday, 28th September 2026 6:33:09 pm
 # Modified By: Josh.5 (jsunnex@gmail.com)
 ###
 set -eu
@@ -17,9 +17,8 @@ export docker_version=$(docker --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
 if [ "X${DOCKER_VERSION:-}" = "X" ]; then
     export docker_version=${DOCKER_VERSION:?}
 fi
-# TODO: Make this configurable
-export dind_net_name="gitlab-runner-net"
-export dind_name="gitlab-runner-dind"
+export dind_net_name="${DIND_NETWORK_NAME:-gitlab-runner-net}"
+export dind_name="${DIND_CONTAINER_NAME:-gitlab-runner-dind}"
 export dind_cache_path="${DATA_PATH:?}/docker-cache"
 export dind_run_path="${DATA_PATH:?}/docker-sock"
 
@@ -71,7 +70,7 @@ _stack_monitor() {
     while true; do
         # Check if any service has exited
         echo "  - Check if DIND container has exited ---"
-        if ! docker ps --filter "name=${dind_name:?}" | grep -q "${dind_name:?}"; then
+        if ! docker ps --format '{{.Names}}' | grep -Fxq "${dind_name:?}"; then
             echo "      - DIND container has stopped. Exiting with status code 123 ---"
             exit 123
         fi
