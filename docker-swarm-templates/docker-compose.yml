@@ -36,6 +36,9 @@
 #   #-      https://gitlab.com/gitlab-org/gitlab-runner/-/releases
 #   #-      https://hub.docker.com/r/gitlab/gitlab-runner/tags
 #   GITLAB_RUNNER_VERSION=v19.4.1
+#   #-  - GITLAB_REGISTRATION_TOKEN_SECRET -
+#   #-    Name of the existing Docker secret containing the runner authentication token
+#   GITLAB_REGISTRATION_TOKEN_SECRET=GITLAB_REGISTRATION_TOKEN_SECRET
 #   #-  - RUNNER_NAME -
 #   #-    Configure the GitLab Runner name
 #   RUNNER_NAME=swarm-gitlab-runner
@@ -62,6 +65,7 @@
 secrets:
   GITLAB_REGISTRATION_TOKEN_SECRET:
     external: true
+    name: ${GITLAB_REGISTRATION_TOKEN_SECRET:-GITLAB_REGISTRATION_TOKEN_SECRET}
 
 x-service-defaults: &service_defaults
   deploy:

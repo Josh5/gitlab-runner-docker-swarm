@@ -23,9 +23,9 @@ See [GitLab's runner creation guide](https://docs.gitlab.com/ci/runners/runners_
 
 ## Create the Portainer secret
 
-In the target Swarm environment, open **Secrets > Add secret**. Set the name to `GITLAB_REGISTRATION_TOKEN_SECRET`, paste only the runner authentication token as its value, and create the secret before deploying the stack. See [Portainer's secret guide](https://docs.portainer.io/user/docker/secrets/add).
+In the target Swarm environment, open **Secrets > Add secret**. Choose a name (the default is `GITLAB_REGISTRATION_TOKEN_SECRET`), paste only the runner authentication token as its value, and create the secret before deploying the stack. Set the stack environment variable `GITLAB_REGISTRATION_TOKEN_SECRET` to that secret's name. For example, use `GITLAB_REGISTRATION_TOKEN_SECRET=gitlab-runner-group-a-token` to select an existing secret named `gitlab-runner-group-a-token`. See [Portainer's secret guide](https://docs.portainer.io/user/docker/secrets/add).
 
-The name is retained for compatibility: despite containing `REGISTRATION_TOKEN`, this secret holds the runner authentication token. The template declares it as external and mounts it into the runner manager. Keep the token out of Git and the stack environment variable block.
+The default name is retained for compatibility: despite containing `REGISTRATION_TOKEN`, this secret holds the runner authentication token. The template declares it as external and always mounts it at `/run/secrets/GITLAB_REGISTRATION_TOKEN_SECRET` in the runner manager, regardless of its Docker secret name. To reuse the template for different runners, select a different secret name for each stack. Keep the token out of Git and the stack environment variable block; the environment variable contains only the secret's name.
 
 ## Add the stack in Portainer
 
@@ -43,6 +43,7 @@ The name is retained for compatibility: despite containing `REGISTRATION_TOKEN`,
 PLACEMENT_CONSTRAINT=engine.labels.node-type==gitlab-runner
 DATA_PATH=/opt/gitlab-runner
 GITLAB_RUNNER_VERSION=v19.4.1
+GITLAB_REGISTRATION_TOKEN_SECRET=GITLAB_REGISTRATION_TOKEN_SECRET
 RUNNER_NAME=swarm-gitlab-runner
 RUNNER_CONCURRENCY=2
 DOCKER_IMAGE=docker
@@ -55,17 +56,18 @@ The Compose path above is relative to the published release branch's root. This 
 
 ## Configuration options
 
-| Variable                       | Default or requirement             | Purpose                                                                                                                                                                                                                   |
-| ------------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PLACEMENT_CONSTRAINT`         | Required                           | Selects nodes for both managers. The example uses the engine label `node-type=gitlab-runner`; `node.hostname==runner-1` is another option.                                                                                |
-| `DATA_PATH`                    | Required                           | Absolute host path for persistent Docker cache, runner configuration, and helper binaries. Create it on every selected node before deploying.                                                                             |
-| `GITLAB_RUNNER_VERSION`        | `v19.4.1`                          | Version tag of the upstream `gitlab/gitlab-runner` image launched by the manager. This does not select the manager image version.                                                                                         |
-| `RUNNER_NAME`                  | Required                           | Runner description and directory name under `DATA_PATH`. Keep it stable to reuse the same configuration directory.                                                                                                        |
-| `RUNNER_CONCURRENCY`           | `1` when omitted; example uses `2` | Maximum simultaneous jobs per node's runner process. With multiple selected nodes, total capacity increases accordingly. Use a positive integer.                                                                          |
-| `DOCKER_IMAGE`                 | `docker`                           | Default job image when a pipeline does not specify one.                                                                                                                                                                   |
-| `DOCKER_PULL_POLICY`           | `if-not-present`                   | Default image pull policy. Supported values are `always`, `if-not-present`, and `never`.                                                                                                                                  |
-| `DOCKER_ALLOWED_PULL_POLICIES` | `always,if-not-present`            | Comma-separated policies jobs may request, without spaces. Must include `DOCKER_PULL_POLICY`.                                                                                                                             |
-| `KEEP_ALIVE`                   | `true`                             | Skips forced cleanup of existing runner/DinD containers at manager startup. Configuration changes can still cause recreation, and normal manager shutdown stops its managed container. `false` forces cleanup at startup. |
+| Variable                           | Default or requirement             | Purpose                                                                                                                                                                                                                   |
+| ---------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PLACEMENT_CONSTRAINT`             | Required                           | Selects nodes for both managers. The example uses the engine label `node-type=gitlab-runner`; `node.hostname==runner-1` is another option.                                                                                |
+| `DATA_PATH`                        | Required                           | Absolute host path for persistent Docker cache, runner configuration, and helper binaries. Create it on every selected node before deploying.                                                                             |
+| `GITLAB_RUNNER_VERSION`            | `v19.4.1`                          | Version tag of the upstream `gitlab/gitlab-runner` image launched by the manager. This does not select the manager image version.                                                                                         |
+| `GITLAB_REGISTRATION_TOKEN_SECRET` | `GITLAB_REGISTRATION_TOKEN_SECRET` | Name of the existing external Docker secret containing the runner authentication token. Set a different name per stack to use different tokens.                                                                           |
+| `RUNNER_NAME`                      | Required                           | Runner description and directory name under `DATA_PATH`. Keep it stable to reuse the same configuration directory.                                                                                                        |
+| `RUNNER_CONCURRENCY`               | `1` when omitted; example uses `2` | Maximum simultaneous jobs per node's runner process. With multiple selected nodes, total capacity increases accordingly. Use a positive integer.                                                                          |
+| `DOCKER_IMAGE`                     | `docker`                           | Default job image when a pipeline does not specify one.                                                                                                                                                                   |
+| `DOCKER_PULL_POLICY`               | `if-not-present`                   | Default image pull policy. Supported values are `always`, `if-not-present`, and `never`.                                                                                                                                  |
+| `DOCKER_ALLOWED_PULL_POLICIES`     | `always,if-not-present`            | Comma-separated policies jobs may request, without spaces. Must include `DOCKER_PULL_POLICY`.                                                                                                                             |
+| `KEEP_ALIVE`                       | `true`                             | Skips forced cleanup of existing runner/DinD containers at manager startup. Configuration changes can still cause recreation, and normal manager shutdown stops its managed container. `false` forces cleanup at startup. |
 
 The GitLab runner's scope, job tags, protected-job access, and acceptance of untagged jobs are configured in GitLab when creating or editing the runner.
 
