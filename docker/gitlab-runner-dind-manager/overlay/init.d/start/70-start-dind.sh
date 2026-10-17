@@ -50,6 +50,7 @@ echo "    - DIND Mem Limit (bytes): ${DIND_MEMLIMIT}"
 echo "    - DIND Mem Limit (MiB): $((DIND_MEMLIMIT / 1024 / 1024))"
 
 DIND_RUN_CMD="docker run --privileged -d --rm --name ${dind_name:?} \
+          --pids-limit 8192 \
           --memory ${DIND_MEMLIMIT:?} \
           --cpu-shares ${DIND_CPU_SHARES:?} \
           --cpu-period ${CPU_PERIOD:?} \
